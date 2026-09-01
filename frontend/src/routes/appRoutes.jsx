@@ -37,6 +37,15 @@ import LibraryStaffReturns from '../pages/libraryStaff/LibraryStaffReturns';
 import LibraryStaffProfile from '../pages/libraryStaff/LibraryStaffProfile';
 import LibraryStaffHistory from '../pages/libraryStaff/LibraryStaffHistory';
 
+import LabStaffLayout from '../layouts/LabStaffLayout';
+import LabStaffHome from '../pages/labStaff/LabStaffHome';
+import LabStaffInventory from '../pages/labStaff/LabStaffInventory';
+import LabStaffRequests from '../pages/labStaff/LabStaffRequests';
+import LabStaffReturns from '../pages/labStaff/LabStaffReturns';
+import LabStaffProfile from '../pages/labStaff/LabStaffProfile';
+import LabStaffHistory from '../pages/labStaff/LabStaffHistory';
+import { Rotate3D } from 'lucide-react';
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -103,6 +112,22 @@ export default function AppRoutes() {
             <Route path="returns" element={<LibraryStaffReturns />} />
             <Route path="profile" element={<LibraryStaffProfile />} />
             <Route path="history" element={<LibraryStaffHistory />} />
+        </Route>
+
+        <Route
+          path="lab-staff"
+          element={
+            <ProtectedRoute allowedRoles={['lab_staff']}>
+              <LibraryStaffLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<LabStaffHome />} />
+          <Route path="inventory" element={<LabStaffInventory />} />
+          <Route path="requests" element={<LabStaffRequests />} />
+          <Route path="returns" element={<LabStaffReturns />} />
+          <Route path="profile" element={<LabStaffProfile />} />
+          <Route path="history" element={<LabStaffHistory />} />
         </Route>
 
       <Route path="*" element={<NotFoundPage />} />

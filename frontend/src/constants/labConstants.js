@@ -1,0 +1,1 @@
+export const INSTRUMENT_SECTIONS = ['Biology', 'Chemistry', 'Physics', 'Non-technical', 'Technology'];
