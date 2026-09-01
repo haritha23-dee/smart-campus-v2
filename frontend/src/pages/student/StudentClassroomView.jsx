@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getClassroomDetails,
   getClassroomResources,
   postHandwrittenNotes,
 } from '../../services/studentService';
+import { useNotifications } from '../../context/NotificationContext';
 import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
 
@@ -22,6 +23,7 @@ const resolveFileUrl = (path) =>
 export default function StudentClassroomView() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { notifications } = useNotifications();
   const [classroom, setClassroom] = useState(null);
   const [subjects, setSubjects] = useState([]);
   const [activeSubject, setActiveSubject] = useState('');
@@ -34,6 +36,8 @@ export default function StudentClassroomView() {
   const [form, setForm] = useState({ title: '', description: '', subject: '', file: null });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+
+  const lastSeenNotifId = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -72,6 +76,26 @@ export default function StudentClassroomView() {
   useEffect(() => {
     if (activeSubject) fetchResources(activeSubject);
   }, [activeSubject, fetchResources]);
+
+  useEffect(() => {
+    const latest = notifications?.[0];
+    if (!latest || latest._id === lastSeenNotifId.current) return;
+    lastSeenNotifId.current = latest._id;
+
+    const meta = latest.meta || {};
+    const isResourceEvent =
+      latest.type?.toLowerCase().includes('resource') ||
+      latest.title?.toLowerCase().includes('notes') ||
+      latest.title?.toLowerCase().includes('resource');
+
+    if (
+      isResourceEvent &&
+      String(meta.classroomId) === String(id) &&
+      meta.subject === activeSubject
+    ) {
+      fetchResources(activeSubject);
+    }
+  }, [notifications, id, activeSubject, fetchResources]);
 
   const openModal = () => {
     setForm({ title: '', description: '', subject: activeSubject || subjects[0] || '', file: null });
