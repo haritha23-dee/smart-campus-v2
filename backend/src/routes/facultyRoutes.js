@@ -1,12 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const ctrl = require("../controllers/facultyController");
+const { getMe, updateMyProfile, changePassword } = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 const { authorize } = require("../middleware/role");
-const { uploadResource } = require("../middleware/upload");
+const { uploadResource, uploadPhoto } = require("../middleware/upload");
 const { ROLES } = require("../config/constants");
+
 router.use(protect, authorize(ROLES.FACULTY));
-router.get("/classrooms", ctrl.listDepartmentClassrooms); 
+
+// Profile management
+router.get("/profile", getMe);
+router.put("/profile", uploadPhoto.single("photo"), updateMyProfile);
+router.put("/profile/change-password", changePassword);
+router.get("/classrooms", ctrl.listDepartmentClassrooms);
 router.get("/classrooms/mine", ctrl.myClassrooms);
 router.post("/classrooms", ctrl.createClassroom);
 router.post("/classrooms/:id/join", ctrl.joinClassroom);
