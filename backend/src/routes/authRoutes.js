@@ -1,0 +1,10 @@
+const express = require("express");
+const router = express.Router();
+const { login, getMe, updateMyProfile, changePassword } = require("../controllers/authController");
+const { protect } = require("../middleware/auth");
+const { uploadPhoto } = require("../middleware/upload");
+router.post("/login", login);
+router.get("/me", protect, getMe);
+router.put("/profile", protect, uploadPhoto.single("photo"), updateMyProfile);
+router.put("/change-password", protect, changePassword);
+module.exports = router;

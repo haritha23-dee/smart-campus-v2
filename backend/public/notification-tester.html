@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Realtime Notification Tester</title>
+<!-- Loaded dynamically after page load, from whichever server URL you enter below,
+     so it always matches your running server's Socket.IO version and needs no internet access. -->
+<script>
+  function loadSocketIoScript(serverUrl, callback) {
+    const existing = document.getElementById('socketio-client-script');
+    if (existing) existing.remove();
+    const script = document.createElement('script');
+    script.id = 'socketio-client-script';
+    script.src = serverUrl.replace(/\/$/, '') + '/socket.io/socket.io.js';
+    script.onload = callback;
+    script.onerror = () => alert('Could not load the Socket.IO client from ' + script.src + '. Make sure your server is running and the Server URL above is correct.');
+    document.head.appendChild(script);
+  }
+</script>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 16px; background: #f7f7fb; }
+  h2 { color: #2b2d42; }
+  input, button { padding: 10px; font-size: 14px; margin: 6px 0; width: 100%; box-sizing: border-box; }
+  button { background: #4361ee; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+  button:hover { background: #3a56d4; }
+  #status { padding: 8px 12px; border-radius: 6px; font-weight: bold; margin: 10px 0; }
+  .disconnected { background: #ffe1e1; color: #c1121f; }
+  .connected { background: #d8f3dc; color: #2d6a4f; }
+  #log { margin-top: 20px; }
+  .notif { background: white; border-left: 5px solid #4361ee; padding: 12px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .notif .title { font-weight: bold; color: #2b2d42; }
+  .notif .msg { color: #555; margin-top: 4px; }
+  .notif .time { color: #999; font-size: 12px; margin-top: 6px; }
+</style>
+</head>
+<body>
+  <h2>🔔 Realtime Notification Tester</h2>
+  <p>Server URL:</p>
+  <input id="serverUrl" value="http://localhost:5000" />
+  <p>JWT Token (from POST /api/auth/login response):</p>
+  <input id="token" placeholder="Paste the logged-in user's token here" />
+  <button id="connectBtn">Connect</button>
+
+  <div id="status" class="disconnected">Not connected</div>
+
+  <div id="log"></div>
+
+<script>
+  let socket = null;
+
+  document.getElementById('connectBtn').addEventListener('click', connectSocket);
+
+  function connectSocket() {
+    const url = document.getElementById('serverUrl').value.trim();
+    const token = document.getElementById('token').value.trim();
+    const statusEl = document.getElementById('status');
+
+    if (!token) {
+      alert('Paste a JWT token first (login as any role via Postman and copy the token).');
+      return;
+    }
+
+    statusEl.textContent = 'Loading Socket.IO client from server...';
+    statusEl.className = 'disconnected';
+
+    loadSocketIoScript(url, () => {
+      if (socket) socket.disconnect();
+      socket = io(url, { auth: { token } });
+
+      socket.on('connect', () => {
+        statusEl.textContent = '✅ Connected (socket id: ' + socket.id + ') — waiting for notifications...';
+        statusEl.className = 'connected';
+      });
+
+      socket.on('connect_error', (err) => {
+        statusEl.textContent = '❌ Connection failed: ' + err.message;
+        statusEl.className = 'disconnected';
+      });
+
+      socket.on('disconnect', () => {
+        statusEl.textContent = 'Disconnected';
+        statusEl.className = 'disconnected';
+      });
+
+      socket.on('notification:new', (data) => {
+        const log = document.getElementById('log');
+        const div = document.createElement('div');
+        div.className = 'notif';
+        div.innerHTML =
+          '<div class="title">🔔 ' + data.title + '</div>' +
+          '<div class="msg">' + data.message + '</div>' +
+          '<div class="time">' + new Date(data.createdAt).toLocaleString() + ' | type: ' + data.type + '</div>';
+        log.prepend(div);
+      });
+    });
+  }
+</script>
+</body>
+</html>

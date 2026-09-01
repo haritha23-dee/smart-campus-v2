@@ -1,0 +1,48 @@
+src/
+  assets/
+    images/                    → hero images, logos
+  components/
+    common/
+      Navbar.jsx
+      Footer.jsx
+      ThemeToggle.jsx          → (already done)
+      Button.jsx               → reusable button (primary/secondary variants)
+    home/
+      HeroSection.jsx
+      HowItWorksSection.jsx
+      FeaturesSection.jsx
+    dashboard/                 → shared dashboard pieces (later phase)
+      DashboardCard.jsx
+      Sidebar.jsx
+  pages/
+    HomePage.jsx
+    AboutPage.jsx
+    LoginPage.jsx
+    legal/
+      PrivacyPage.jsx
+      TermsPage.jsx
+      privacy-policy.md
+      terms-of-service.md
+    student/                   → later phase
+    faculty/                   → later phase
+    libraryStaff/               → later phase
+    labStaff/                   → later phase
+    admin/                      → later phase
+  context/
+    ThemeContext.jsx           → (already done)
+    AuthContext.jsx            → later phase
+    NotificationContext.jsx    → later phase
+  services/
+    api.js                     → axios instance
+    authService.js              → later phase
+    studentService.js           → later phase
+  routes/
+    AppRoutes.jsx               → (Phase 1 la already build panniуருக்கீங்க)
+    ProtectedRoute.jsx          → later phase
+  hooks/
+    useAuth.js                  → later phase
+  utils/
+    formatDate.js                → later phase
+  App.jsx                       → layout shell (Navbar + Routes + Footer)
+  main.jsx
+  index.css

@@ -22,13 +22,6 @@ import StudentLibraryPage from '../pages/student/StudentLibraryPage';
 import StudentLabPage from '../pages/student/StudentLabPage';
 import StudentHistoryPage from '../pages/student/StudentHistoryPage';
 
-import FacultyLayout from '../layouts/FacultyLayout';
-import FacultyHome from '../pages/faculty/FacultyHome';
-import FacultyProfile from '../pages/faculty/FacultyProfile';
-import FacultyClassroomHub from '../pages/faculty/FacultyClassroomHub';
-import FacultyClassroomDetail from '../pages/faculty/FacultyClassroomDetail';
-import FacultyResourceHistory from '../pages/faculty/FacultyResourceHistory';
-
 export default function AppRoutes() {
   return (
     <Routes>
@@ -70,16 +63,6 @@ export default function AppRoutes() {
         <Route path="lab" element={<StudentLabPage />} />
         <Route path="history" element={<StudentHistoryPage />} />
       </Route>
-
-        <Route
-            path="/faculty"
-            element={<ProtectedRoute allowedRoles={['faculty']}><FacultyLayout /></ProtectedRoute>}>
-            <Route index element={<FacultyHome />} />
-            <Route path="profile" element={<FacultyProfile />} />
-            <Route path="classrooms" element={<FacultyClassroomHub />} />
-            <Route path="classrooms/:id" element={<FacultyClassroomDetail />} />
-            <Route path="history" element={<FacultyResourceHistory />} />
-        </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
