@@ -45,7 +45,7 @@ export default function StudentClassroomView() {
       try {
         const { classroom: room } = await getClassroomDetails(id);
         setClassroom(room);
-        const uniqueSubjects = [...new Set((room.facultyList || []).map((f) => f.subject).filter(Boolean))];
+        const uniqueSubjects = [...new Set((room.facultySubjects || []).map((fs) => fs.subject).filter(Boolean))];
         setSubjects(uniqueSubjects);
         setActiveSubject(uniqueSubjects[0] || '');
         setForm((f) => ({ ...f, subject: uniqueSubjects[0] || '' }));
@@ -169,12 +169,12 @@ export default function StudentClassroomView() {
         </button>
       </div>
 
-      {classroom.facultyList?.length > 0 && (
+      {classroom.facultySubjects?.length > 0 && (
         <div className="flex flex-wrap gap-3">
-          {classroom.facultyList.map((f) => (
-            <div key={f._id} className="border border-border-subtle rounded-xl px-4 py-2 bg-surface">
-              <p className="text-xs font-semibold">{f.name}</p>
-              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">{f.subject} · {f.email}</p>
+          {classroom.facultySubjects.map((fs) => (
+            <div key={fs._id || fs.faculty?._id} className="border border-border-subtle rounded-xl px-4 py-2 bg-surface">
+              <p className="text-xs font-semibold">{fs.faculty?.name || 'Faculty'}</p>
+              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">{fs.subject} · {fs.faculty?.email}</p>
             </div>
           ))}
         </div>

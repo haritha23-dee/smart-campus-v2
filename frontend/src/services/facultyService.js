@@ -13,10 +13,9 @@ export const updateFacultyProfile = async ({ name, designation, yearJoined, subj
   if (subjectsCanTeach !== undefined) form.append('subjectsCanTeach', subjectsCanTeach);
   if (photoFile instanceof File) form.append('photo', photoFile);
   const { data } = await api.put('/auth/profile', form);
-  return data; // { success, user }
+  return data; 
 };
 
-// ---- Classrooms ----
 export const listAvailableClassrooms = async () => {
   const { data } = await api.get('/faculty/classrooms');
   return data;
@@ -39,6 +38,11 @@ export const joinClassroom = async (id, subject) => {
 
 export const getClassroom = async (id) => {
   const { data } = await api.get(`/faculty/classrooms/${id}`);
+  return data;
+};
+
+export const getClassroomSubjectResources = async (id, subject) => {
+  const { data } = await api.get(`/faculty/classrooms/${id}/subjects/${subject}/resources`);
   return data;
 };
 

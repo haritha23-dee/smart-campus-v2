@@ -18,6 +18,7 @@ router.get("/classrooms/mine", ctrl.myClassrooms);
 router.post("/classrooms", ctrl.createClassroom);
 router.post("/classrooms/:id/join", ctrl.joinClassroom);
 router.get("/classrooms/:id", ctrl.getClassroom);
+router.get("/classrooms/:id/subjects/:subject/resources", ctrl.getSubjectResources);
 router.post("/classrooms/:id/resources", uploadResource.single("file"), ctrl.postResource);
 router.get("/resources/mine", ctrl.myResources);
 module.exports = router;

@@ -105,6 +105,25 @@ const getClassroom = asyncHandler(async (req, res) => {
   }
   res.json({ success: true, classroom });
 });
+const getSubjectResources = asyncHandler(async (req, res) => {
+  const { id, subject } = req.params;
+  const classroom = await Classroom.findById(id);
+  if (!classroom) {
+    res.status(404);
+    throw new Error("Classroom not found.");
+  }
+  const teachesSubject = classroom.facultySubjects.some(
+    (fs) => String(fs.faculty) === String(req.user._id) && fs.subject === subject
+  );
+  if (!teachesSubject) {
+    res.status(403);
+    throw new Error("You can only view resources for a subject you teach in this classroom.");
+  }
+  const resources = await Resource.find({ classroom: id, subject })
+    .populate("postedBy", "name email photo designation role")
+    .sort({ createdAt: -1 });
+  res.json({ success: true, count: resources.length, resources });
+});
 const postResource = asyncHandler(async (req, res) => {
   const { subject, type, title, description } = req.body;
   if (!subject || !type || !title) {
@@ -171,4 +190,5 @@ module.exports = {
   getClassroom,
   postResource,
   myResources,
+  getSubjectResources,
 };

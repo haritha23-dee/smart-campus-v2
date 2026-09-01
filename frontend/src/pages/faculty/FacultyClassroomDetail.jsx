@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   getClassroom,
   postClassroomResource,
-  getResourceHistory,
+  getClassroomSubjectResources,
   resolveFileUrl,
 } from '../../services/facultyService';
+import { useNotifications } from '../../context/NotificationContext';
 import { RESOURCE_TYPE_OPTIONS, RESOURCE_TYPE_LABELS } from '../../constants/facultyConstants';
 import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
@@ -15,6 +16,7 @@ export default function FacultyClassroomDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { notifications } = useNotifications();
 
   const [classroom, setClassroom] = useState(null);
   const [mySubjects, setMySubjects] = useState([]);
@@ -28,6 +30,8 @@ export default function FacultyClassroomDetail() {
   const [form, setForm] = useState({ subject: '', type: RESOURCE_TYPE_OPTIONS[0].value, title: '', description: '', file: null });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+
+  const lastSeenNotifId = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -56,7 +60,7 @@ export default function FacultyClassroomDetail() {
       if (!subject) return;
       setLoadingResources(true);
       try {
-        const { resources: res } = await getResourceHistory({ classroom: id, subject });
+        const { resources: res } = await getClassroomSubjectResources(id, subject);
         setResources(res || []);
       } catch (err) {
         setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to load resources.' });
@@ -70,6 +74,27 @@ export default function FacultyClassroomDetail() {
   useEffect(() => {
     if (activeSubject) fetchResources(activeSubject);
   }, [activeSubject, fetchResources]);
+
+  // Real-time socket sync effect
+  useEffect(() => {
+    const latest = notifications?.[0];
+    if (!latest || latest._id === lastSeenNotifId.current) return;
+    lastSeenNotifId.current = latest._id;
+
+    const meta = latest.meta || {};
+    const isResourceEvent =
+      latest.type?.toLowerCase().includes('resource') ||
+      latest.title?.toLowerCase().includes('notes') ||
+      latest.title?.toLowerCase().includes('resource');
+
+    if (
+      isResourceEvent &&
+      String(meta.classroomId) === String(id) &&
+      (meta.subject === activeSubject || !meta.subject)
+    ) {
+      fetchResources(activeSubject);
+    }
+  }, [notifications, id, activeSubject, fetchResources]);
 
   const openModal = () => {
     setForm({ subject: activeSubject || mySubjects[0] || '', type: RESOURCE_TYPE_OPTIONS[0].value, title: '', description: '', file: null });
@@ -178,10 +203,15 @@ export default function FacultyClassroomDetail() {
                 {resources.map((r) => (
                   <div key={r._id} className="border border-border-subtle rounded-xl p-4 bg-surface flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-neutral-500/10 text-neutral-600 dark:text-neutral-400">
                           {RESOURCE_TYPE_LABELS[r.type] || r.type}
                         </span>
+                        {r.postedByRole === 'student' && (
+                          <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold">
+                            Student Notes · {r.postedBy?.name}
+                          </span>
+                        )}
                         <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
                           {new Date(r.createdAt).toLocaleDateString()}
                         </span>
@@ -191,14 +221,16 @@ export default function FacultyClassroomDetail() {
                         <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{r.description}</p>
                       )}
                     </div>
-                    <a
-                      href={resolveFileUrl(r.fileUrl || r.filePath)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 px-4 py-2 rounded-lg text-xs font-semibold border border-brand text-brand hover:bg-brand hover:text-white transition-colors"
-                    >
-                      Download
-                    </a>
+                    {(r.fileUrl || r.filePath) && (
+                      <a
+                        href={resolveFileUrl(r.fileUrl || r.filePath)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 px-4 py-2 rounded-lg text-xs font-semibold border border-brand text-brand hover:bg-brand hover:text-white transition-colors"
+                      >
+                        Download
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
