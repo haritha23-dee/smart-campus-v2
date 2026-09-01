@@ -56,10 +56,15 @@ export const postHandwrittenNotes = async (id, payload) => {
   return data;
 };
 
-export const listLibraryBooks = async (params = {}) => {
-  const { data } = await api.get('/student/library/books', { params });
-  return data;
-};
+export const listLibrarySections = async (params = {}) =>{
+    const { data } = await api.get('/student/library/sections');
+    return data;
+}
+
+export const listBooksInLibrarySection = async (section) =>{
+    const { data } = await api.get(`/student/library/sections/${encodedURIComponent(section)}/books`);
+    return data;
+}
 
 export const requestBookBorrow = async (id) => {
   const { data } = await api.post(`/student/library/books/${id}/request`);

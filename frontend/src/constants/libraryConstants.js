@@ -1,0 +1,1 @@
+export const BOOK_SECTIONS = ['Academic', 'Reference', 'Fiction', 'Non-Fiction', 'Periodicals', 'Technology'];

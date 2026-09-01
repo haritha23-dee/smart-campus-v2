@@ -29,6 +29,14 @@ import FacultyClassroomHub from '../pages/faculty/FacultyClassroomHub';
 import FacultyClassroomDetail from '../pages/faculty/FacultyClassroomDetail';
 import FacultyResourceHistory from '../pages/faculty/FacultyResourceHistory';
 
+import LibraryStaffLayout from '../layouts/LibraryStaffLayout';
+import LibraryStaffHome from '../pages/libraryStaff/LibraryStaffHome';
+import LibraryStaffInventory from '../pages/libraryStaff/LibraryStaffInventory';
+import LibraryStaffRequests from '../pages/libraryStaff/LibraryStaffRequests';
+import LibraryStaffReturns from '../pages/libraryStaff/LibraryStaffReturns';
+import LibraryStaffProfile from '../pages/libraryStaff/LibraryStaffProfile';
+import LibraryStaffHistory from '../pages/libraryStaff/LibraryStaffHistory';
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -79,6 +87,22 @@ export default function AppRoutes() {
             <Route path="classrooms" element={<FacultyClassroomHub />} />
             <Route path="classrooms/:id" element={<FacultyClassroomDetail />} />
             <Route path="history" element={<FacultyResourceHistory />} />
+        </Route>
+
+        <Route
+            path="/library-staff"
+            element={
+                <ProtectedRoute allowedRoles={['library_staff']}>
+                    <LibraryStaffLayout/>
+                </ProtectedRoute>
+            }
+        >
+            <Route index element={<LibraryStaffHome />} />
+            <Route path="inventory" element={<LibraryStaffInventory />} />
+            <Route path="requests" element={<LibraryStaffRequests />} />
+            <Route path="returns" element={<LibraryStaffReturns />} />
+            <Route path="profile" element={<LibraryStaffProfile />} />
+            <Route path="history" element={<LibraryStaffHistory />} />
         </Route>
 
       <Route path="*" element={<NotFoundPage />} />

@@ -1,165 +1,113 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import {
-  getClassroomDetails,
-  getClassroomResources,
-  postHandwrittenNotes,
-} from '../../services/studentService';
-import Modal from '../../components/common/Modal';
+import { listLibrarySections, listBooksInLibrarySection, requestBookBorrow, getStudentHistory } from '../../services/studentService';
 import Toast from '../../components/common/Toast';
 
-const TYPE_STYLES = {
-  Syllabus: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  Notes: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  'Study Materials': 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  'Previous Year QP': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-  Blueprints: 'bg-neutral-500/10 text-neutral-600 dark:text-neutral-400',
-};
-
-export default function StudentClassroomView() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [classroom, setClassroom] = useState(null);
-  const [subjects, setSubjects] = useState([]);
-  const [activeSubject, setActiveSubject] = useState('');
-  const [resources, setResources] = useState([]);
-  const [loadingClassroom, setLoadingClassroom] = useState(true);
-  const [loadingResources, setLoadingResources] = useState(false);
+export default function StudentLibraryPage() {
+  const [sections, setSections] = useState([]);
+  const [activeSection, setActiveSection] = useState('');
+  const [books, setBooks] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
+  const [loadingSections, setLoadingSections] = useState(true);
+  const [loadingBooks, setLoadingBooks] = useState(false);
+  const [requestingId, setRequestingId] = useState(null);
   const [toast, setToast] = useState(null);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', subject: '', file: null });
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState('');
+  const loadRequests = useCallback(async () => {
+    try {
+      const { bookHistory } = await getStudentHistory();
+      setMyRequests((bookHistory || []).filter((r) => ['pending', 'approved', 'overdue'].includes(r.status)));
+    } catch {}
+  }, []);
 
   useEffect(() => {
     (async () => {
-      setLoadingClassroom(true);
+      setLoadingSections(true);
       try {
-        const { classroom: room } = await getClassroomDetails(id);
-        setClassroom(room);
-        const uniqueSubjects = [...new Set((room.facultyList || []).map((f) => f.subject).filter(Boolean))];
-        setSubjects(uniqueSubjects);
-        setActiveSubject(uniqueSubjects[0] || '');
-        setForm((f) => ({ ...f, subject: uniqueSubjects[0] || '' }));
+        const { sections: s } = await listLibrarySections();
+        setSections(s || []);
+        setActiveSection(s?.[0] || '');
       } catch (err) {
-        setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to load classroom.' });
+        setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to load library sections.' });
       } finally {
-        setLoadingClassroom(false);
+        setLoadingSections(false);
       }
     })();
-  }, [id]);
-
-  const fetchResources = useCallback(async () => {
-    if (!activeSubject) return;
-    setLoadingResources(true);
-    try {
-      const { resources: res } = await getClassroomResources(id, activeSubject);
-      setResources(res || []);
-    } catch (err) {
-      setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to load resources.' });
-    } finally {
-      setLoadingResources(false);
-    }
-  }, [id, activeSubject]);
+    loadRequests();
+  }, [loadRequests]);
 
   useEffect(() => {
-    fetchResources();
-  }, [fetchResources]);
-
-  const openModal = () => {
-    setForm({ title: '', description: '', subject: activeSubject || subjects[0] || '', file: null });
-    setFormError('');
-    setModalOpen(true);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.title.trim() || !form.subject) {
-      setFormError('Title and subject are required.');
-      return;
-    }
-    setSubmitting(true);
-    setFormError('');
-    try {
-      const { resource } = await postHandwrittenNotes(id, {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        subject: form.subject,
-        file: form.file,
-      });
-      if (form.subject === activeSubject) {
-        setResources((prev) => [resource, ...prev]);
+    if (!activeSection) return;
+    (async () => {
+      setLoadingBooks(true);
+      try {
+        const { books: b } = await listBooksInLibrarySection(activeSection);
+        setBooks(b || []);
+      } catch (err) {
+        setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to load books.' });
+      } finally {
+        setLoadingBooks(false);
       }
-      setToast({ type: 'success', message: 'Notes posted successfully.' });
-      setModalOpen(false);
+    })();
+  }, [activeSection]);
+
+  const handleRequest = async (book) => {
+    setRequestingId(book._id);
+    try {
+      await requestBookBorrow(book._id);
+      setToast({ type: 'success', message: `Requested "${book.title}". Awaiting library staff approval.` });
+      loadRequests();
     } catch (err) {
-      setFormError(err?.response?.data?.message || 'Failed to post notes.');
+      setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to submit request.' });
     } finally {
-      setSubmitting(false);
+      setRequestingId(null);
     }
   };
-
-  if (loadingClassroom) {
-    return <div className="h-64 rounded-2xl bg-neutral-200 dark:bg-neutral-800 animate-pulse" />;
-  }
-
-  if (!classroom) {
-    return (
-      <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-16">
-        Classroom not found.
-      </p>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
-        <div>
-          <button
-            onClick={() => navigate('/student/departments')}
-            className="text-xs font-semibold text-brand hover:underline mb-2"
-          >
-            &larr; Back to Departments
-          </button>
-          <h1 className="text-2xl font-bold tracking-tight">{classroom.code}</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            {classroom.department?.name} · Year {classroom.year} · Section {classroom.section}
-          </p>
-        </div>
-        <button
-          onClick={openModal}
-          disabled={subjects.length === 0}
-          className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-brand text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          Post Handwritten Notes
-        </button>
+    <div className="space-y-8">
+      <div className="pb-4 border-b border-border-subtle">
+        <span className="text-[11px] uppercase tracking-[0.25em] font-semibold text-neutral-500 dark:text-neutral-400 block mb-2">
+          Library Resources
+        </span>
+        <h1 className="text-2xl font-bold tracking-tight">Browse & Borrow</h1>
       </div>
 
-      {classroom.facultyList?.length > 0 && (
-        <div className="flex flex-wrap gap-3">
-          {classroom.facultyList.map((f) => (
-            <div key={f._id} className="border border-border-subtle rounded-xl px-4 py-2 bg-surface">
-              <p className="text-xs font-semibold">{f.name}</p>
-              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">{f.subject} · {f.email}</p>
-            </div>
-          ))}
+      {myRequests.length > 0 && (
+        <div className="border border-amber-500/30 bg-amber-500/10 rounded-2xl p-5">
+          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 mb-3">My Active Requests</h3>
+          <ul className="space-y-2">
+            {myRequests.map((r) => (
+              <li key={r._id} className="text-xs text-neutral-700 dark:text-neutral-300 flex items-center justify-between">
+                <span>{r.book?.title}</span>
+                <span className="font-medium capitalize">
+                  {r.status}
+                  {r.dueDate ? ` · due ${new Date(r.dueDate).toLocaleDateString()}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
-      {subjects.length === 0 ? (
+      {loadingSections ? (
+        <div className="flex gap-2">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-9 w-24 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+          ))}
+        </div>
+      ) : sections.length === 0 ? (
         <p className="text-sm text-neutral-500 dark:text-neutral-400 border border-dashed border-border-subtle rounded-xl p-6 text-center">
-          No subjects are being taught in this classroom yet.
+          No library sections have been set up yet.
         </p>
       ) : (
         <>
-          <div className="flex flex-wrap gap-2 border-b border-border-subtle pb-3">
-            {subjects.map((s) => (
+          <div className="flex flex-wrap gap-2">
+            {sections.map((s) => (
               <button
                 key={s}
-                onClick={() => setActiveSubject(s)}
+                onClick={() => setActiveSection(s)}
                 className={`px-4 py-2 rounded-full text-xs font-semibold transition-colors ${
-                  activeSubject === s
+                  activeSection === s
                     ? 'bg-brand text-white'
                     : 'border border-border-subtle hover:bg-neutral-200/40 dark:hover:bg-neutral-800/40'
                 }`}
@@ -169,119 +117,48 @@ export default function StudentClassroomView() {
             ))}
           </div>
 
-          {loadingResources ? (
+          {loadingBooks ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-20 rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+                <div key={i} className="h-24 rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
               ))}
             </div>
-          ) : resources.length === 0 ? (
+          ) : books.length === 0 ? (
             <p className="text-sm text-neutral-500 dark:text-neutral-400 border border-dashed border-border-subtle rounded-xl p-6 text-center">
-              No resources posted under {activeSubject} yet.
+              No books in {activeSection} yet.
             </p>
           ) : (
-            <div className="space-y-3">
-              {resources.map((r) => (
-                <div key={r._id} className="border border-border-subtle rounded-xl p-4 bg-surface flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${TYPE_STYLES[r.type] || TYPE_STYLES.Blueprints}`}>
-                        {r.type}
-                      </span>
-                      <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
-                        {new Date(r.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-sm font-semibold">{r.title}</p>
-                    {r.description && (
-                      <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{r.description}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {books.map((b) => (
+                <div key={b._id} className="border border-border-subtle rounded-xl p-4 bg-surface flex flex-col justify-between">
+                  <div>
+                    <p className="text-sm font-semibold">{b.title}</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">by {b.author}</p>
+                    {b.description && (
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-2">{b.description}</p>
                     )}
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-1.5">
-                      Posted by {r.postedBy?.name} ({r.postedBy?.role})
+                    <p className="text-[11px] font-semibold mt-2">
+                      {b.availableCopies > 0 ? (
+                        <span className="text-emerald-600 dark:text-emerald-400">{b.availableCopies} available</span>
+                      ) : (
+                        <span className="text-red-500">Out of copies</span>
+                      )}
+                      {' '}/ {b.totalCopies}
                     </p>
                   </div>
-                  {r.fileUrl && (
-                    <a
-                      href={r.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 px-4 py-2 rounded-lg text-xs font-semibold border border-brand text-brand hover:bg-brand hover:text-white transition-colors"
-                    >
-                      Download
-                    </a>
-                  )}
+                  <button
+                    onClick={() => handleRequest(b)}
+                    disabled={b.availableCopies < 1 || requestingId === b._id}
+                    className="mt-4 px-4 py-2 rounded-lg text-xs font-semibold bg-brand text-white hover:opacity-90 transition-opacity disabled:opacity-50 self-start"
+                  >
+                    {requestingId === b._id ? 'Requesting…' : 'Request Book'}
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </>
       )}
-
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Post Handwritten Notes">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {formError && (
-            <div className="p-3 rounded-lg text-xs font-semibold bg-red-500/10 text-red-600 border border-red-500/20">
-              {formError}
-            </div>
-          )}
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Subject
-            </label>
-            <select
-              value={form.subject}
-              onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-              className="w-full px-4 py-2.5 text-sm rounded-xl bg-canvas border border-border-subtle focus:outline-none focus:ring-2 focus:ring-brand"
-            >
-              {subjects.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Note Title
-            </label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full px-4 py-2.5 text-sm rounded-xl bg-canvas border border-border-subtle focus:outline-none focus:ring-2 focus:ring-brand"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Description
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              rows={3}
-              className="w-full px-4 py-2.5 text-sm rounded-xl bg-canvas border border-border-subtle focus:outline-none focus:ring-2 focus:ring-brand resize-none"
-            />
-          </div>
-          <div>
-            <label className="block text-[11px] uppercase tracking-wider font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-              Attach File
-            </label>
-            <input
-              type="file"
-              onChange={(e) => setForm((f) => ({ ...f, file: e.target.files?.[0] || null }))}
-              className="w-full text-xs file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-brand file:text-white file:text-xs file:font-semibold"
-            />
-          </div>
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-6 py-2.5 text-xs font-semibold rounded-xl bg-brand text-white hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              {submitting ? 'Posting…' : 'Post Notes'}
-            </button>
-          </div>
-        </form>
-      </Modal>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
