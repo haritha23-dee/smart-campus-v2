@@ -26,7 +26,7 @@ export const joinClassroom = async (id) => {
 };
 
 export const getMyClassrooms = async () => {
-  const { data } = await api.get('/student/classrooms/my');
+  const { data } = await api.get('/student/classrooms/joined');
   return data;
 };
 
@@ -36,9 +36,7 @@ export const getClassroomDetails = async (id) => {
 };
 
 export const getClassroomResources = async (id, subject) => {
-  const { data } = await api.get(`/student/classrooms/${id}/resources`, {
-    params: subject ? { subject } : {},
-  });
+  const { data } = await api.get(`/student/classrooms/${id}/subjects/${subject}/resources`);
   return data;
 };
 
@@ -54,7 +52,7 @@ export const postHandwrittenNotes = async (id, payload) => {
     body.append('file', payload.file);
     headers = { 'Content-Type': 'multipart/form-data' };
   }
-  const { data } = await api.post(`/student/classrooms/${id}/resources`, body, { headers });
+  const { data } = await api.post(`/student/classrooms/${id}/subjects/${payload.subject}/notes`, body, { headers });
   return data;
 };
 
