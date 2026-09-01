@@ -11,7 +11,7 @@ export default function FacultyHome() {
           Faculty Dashboard
         </span>
         <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back, {user?.name?.split(' ')[0] || 'Faculty'}
+          Welcome back, {user?.name || 'Faculty'}
         </h1>
         <div className="flex items-center gap-2 mt-2">
           {user?.department?.name && (

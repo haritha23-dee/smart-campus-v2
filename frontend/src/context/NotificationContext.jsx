@@ -8,6 +8,8 @@ import {
 } from '../services/notificationService';
 import { requestOsNotificationPermission, fireOsNotification } from '../utils/osNotify';
 
+import Toast from '../components/common/Toast';
+
 const NotificationContext = createContext();
 
 const SOCKET_URL = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
@@ -17,6 +19,7 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
   const socketRef = useRef(null);
 
   const fetchNotifications = useCallback(async () => {
@@ -51,6 +54,8 @@ export const NotificationProvider = ({ children }) => {
     socket.on('notification:new', (notification) => {
       setNotifications((prev) => [notification, ...prev]);
       setUnreadCount((prev) => prev + 1);
+      //in app toast in case of os notification permission deined
+      setToast({type:'info', message: `${notification.title}: ${notification.message}`});
       fireOsNotification(notification.title, {
         body: notification.message,
         tag: notification._id,
@@ -88,6 +93,7 @@ export const NotificationProvider = ({ children }) => {
       value={{ notifications, unreadCount, loading, markAsRead, markAllRead, refresh: fetchNotifications }}
     >
       {children}
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </NotificationContext.Provider>
   );
 };

@@ -5,6 +5,7 @@ import ThemeToggle from '../../components/common/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import NotificationDropdown from '../../pages/admin/NotificationDropdown';
+import { resolveFileUrl } from '../../services/facultyService';
 
 export default function FacultyNavbar() {
   const { user, logout } = useAuth();
@@ -69,7 +70,7 @@ export default function FacultyNavbar() {
             className="flex items-center gap-2.5 rounded-xl pl-1.5 pr-3 py-1.5 border border-border-subtle hover:bg-neutral-200/50 dark:hover:bg-neutral-800/60 transition-colors cursor-pointer"
           >
             {user?.photo ? (
-              <img src={user.photo} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-brand" />
+              <img src={resolveFileUrl(user.photo)} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-brand" />
             ) : (
               <span className="w-7 h-7 rounded-full bg-brand text-white text-xs font-semibold flex items-center justify-center">
                 {initials}

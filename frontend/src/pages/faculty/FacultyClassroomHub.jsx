@@ -19,7 +19,7 @@ export default function FacultyClassroomHub() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  const [joinTarget, setJoinTarget] = useState(null); // classroom being joined
+  const [joinTarget, setJoinTarget] = useState(null);
   const [joinSubject, setJoinSubject] = useState('');
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState('');
@@ -33,8 +33,11 @@ export default function FacultyClassroomHub() {
     setLoading(true);
     try {
       const [a, m] = await Promise.all([listAvailableClassrooms(), listMyClassrooms()]);
-      setAvailable(a.classrooms || []);
-      setMine(m.classrooms || []);
+      const mineList = m.classrooms || [];
+      const mineIds = new Set(mineList.map((c) => String(c._id)));
+      const availableList = (a.classrooms || []).filter((c) => !mineIds.has(String(c._id)));
+      setAvailable(availableList);
+      setMine(mineList);
     } catch (err) {
       setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to load classrooms.' });
     } finally {
@@ -137,7 +140,7 @@ export default function FacultyClassroomHub() {
       ) : tab === 'available' ? (
         available.length === 0 ? (
           <p className="text-sm text-neutral-500 dark:text-neutral-400 border border-dashed border-border-subtle rounded-xl p-6 text-center">
-            No classrooms exist in your department yet. Create one to get started.
+            No other classrooms are available to join in your department right now.
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
