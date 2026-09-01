@@ -21,15 +21,28 @@ export const NotificationProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const socketRef = useRef(null);
+  const catchUpToastRef = useRef(null);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async ({notifyCatchUp = false} = {}) => {
     if (!user) return;
     setLoading(true);
     try {
       const data = await listNotifications();
-      setNotifications(data.notifications || []);
+      const list = data.notifications || [];
+      setNotifications(list);
       setUnreadCount(data.unreadCount || 0);
-    } catch {} 
+      if (notifyCatchUp){
+        const unread = list.filter((n) => !n.isRead);
+        if (unread.length === 1){
+            setToast({type: 'info', message:`${unread[0].title}: ${unread[0].message}`});
+        }
+        else if(unread.length > 1){
+            setToast({ type:'info', message:`You have ${unread.length} unread notifications.`});
+        }
+      }
+    } catch {
+        //silent on notification polling
+    } 
     finally {
       setLoading(false);
     }
@@ -39,11 +52,15 @@ export const NotificationProvider = ({ children }) => {
     if (!user) {
       setNotifications([]);
       setUnreadCount(0);
+      catchUpToastRef.current = false;
       return;
     }
 
     requestOsNotificationPermission();
-    fetchNotifications();
+
+    const shouldCatchUp = !catchUpToastRef.current;
+    catchUpToastRef.current = true;
+    fetchNotifications({ notifyCatchUp: shouldCatchUp });
 
     const token = localStorage.getItem('token');
     if (!token || !SOCKET_URL) return;

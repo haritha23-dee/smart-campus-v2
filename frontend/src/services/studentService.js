@@ -62,7 +62,7 @@ export const listLibrarySections = async (params = {}) =>{
 }
 
 export const listBooksInLibrarySection = async (section) =>{
-    const { data } = await api.get(`/student/library/sections/${encodedURIComponent(section)}/books`);
+    const { data } = await api.get(`/student/library/sections/${encodeURIComponent(section)}/books`);
     return data;
 }
 
