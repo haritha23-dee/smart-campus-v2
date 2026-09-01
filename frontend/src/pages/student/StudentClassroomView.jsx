@@ -16,6 +16,9 @@ const TYPE_STYLES = {
   Blueprints: 'bg-neutral-500/10 text-neutral-600 dark:text-neutral-400',
 };
 
+const resolveFileUrl = (path) =>
+  path ? `${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}${path}` : '';
+
 export default function StudentClassroomView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -206,15 +209,13 @@ export default function StudentClassroomView() {
                       Posted by {r.postedBy?.name} ({r.postedBy?.role})
                     </p>
                   </div>
-                  {r.fileUrl && (
-                    <a
-                      href={r.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  {(r.fileUrl || r.filePath) && (
+                    <button
+                      onClick={() => window.open(resolveFileUrl(r.fileUrl || r.filePath), '_blank')}
                       className="shrink-0 px-4 py-2 rounded-lg text-xs font-semibold border border-brand text-brand hover:bg-brand hover:text-white transition-colors"
                     >
                       Download
-                    </a>
+                    </button>
                   )}
                 </div>
               ))}
@@ -272,6 +273,7 @@ export default function StudentClassroomView() {
               Attach File
             </label>
             <input
+              key={modalOpen ? 'open' : 'closed'}
               type="file"
               onChange={(e) => setForm((f) => ({ ...f, file: e.target.files?.[0] || null }))}
               className="w-full text-xs file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-brand file:text-white file:text-xs file:font-semibold"
