@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getLabProfile, updateLabProfile, changePassword, resolveFileUrl } from '../../services/labStaffService';
+import { getLabProfile, updateLabProfile, resolveFileUrl } from '../../services/labStaffService';
 
 export default function LabStaffProfile() {
   const { updateUser } = useAuth();
@@ -15,11 +15,6 @@ export default function LabStaffProfile() {
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
   const fileInputRef = useRef(null);
-
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [pwLoading, setPwLoading] = useState(false);
-  const [pwMsg, setPwMsg] = useState({ text: '', type: '' });
 
   useEffect(() => {
     (async () => {
@@ -81,30 +76,6 @@ export default function LabStaffProfile() {
       setMsg({ text: err?.response?.data?.message || 'Failed to update profile', type: 'error' });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handlePasswordSubmit = async (e) => {
-    e.preventDefault();
-    if (!currentPassword || !newPassword) {
-      setPwMsg({ text: 'Both fields are required.', type: 'error' });
-      return;
-    }
-    if (newPassword.length < 6) {
-      setPwMsg({ text: 'New password must be at least 6 characters.', type: 'error' });
-      return;
-    }
-    setPwLoading(true);
-    setPwMsg({ text: '', type: '' });
-    try {
-      await changePassword({ currentPassword, newPassword });
-      setPwMsg({ text: 'Password updated successfully.', type: 'success' });
-      setCurrentPassword('');
-      setNewPassword('');
-    } catch (err) {
-      setPwMsg({ text: err?.response?.data?.message || 'Failed to update password.', type: 'error' });
-    } finally {
-      setPwLoading(false);
     }
   };
 
@@ -247,52 +218,6 @@ export default function LabStaffProfile() {
             className="px-6 py-2.5 text-xs font-semibold rounded-xl bg-brand text-white hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {loading ? 'Saving…' : 'Save Changes'}
-          </button>
-        </div>
-      </form>
-
-      <form onSubmit={handlePasswordSubmit} className="bg-surface border border-border-subtle rounded-2xl p-6 space-y-4">
-        <h3 className="text-sm font-semibold">Change Password</h3>
-        {pwMsg.text && (
-          <div
-            className={`p-3 rounded-lg text-xs font-semibold ${
-              pwMsg.type === 'success'
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                : 'bg-red-500/10 text-red-600 border border-red-500/20'
-            }`}
-          >
-            {pwMsg.text}
-          </div>
-        )}
-        <div>
-          <label className="block text-[11px] uppercase tracking-wider font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-            Current Password
-          </label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full px-4 py-2.5 text-sm rounded-xl bg-canvas border border-border-subtle focus:outline-none focus:ring-2 focus:ring-brand"
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] uppercase tracking-wider font-semibold text-neutral-600 dark:text-neutral-300 mb-1.5">
-            New Password
-          </label>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full px-4 py-2.5 text-sm rounded-xl bg-canvas border border-border-subtle focus:outline-none focus:ring-2 focus:ring-brand"
-          />
-        </div>
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={pwLoading}
-            className="px-6 py-2.5 text-xs font-semibold rounded-xl border border-border-subtle hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50"
-          >
-            {pwLoading ? 'Updating…' : 'Update Password'}
           </button>
         </div>
       </form>

@@ -29,7 +29,7 @@ const getMe = asyncHandler(async (req, res) => {
   res.json({ success: true, user: user.toSafeJSON() });
 });
 const updateMyProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const user = await User.findById(req.user._id).populate("department");
   const commonEditable = ["name", "yearJoined"];
   commonEditable.forEach((field) => {
     if (req.body[field] !== undefined) user[field] = req.body[field];

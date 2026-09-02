@@ -5,8 +5,14 @@ export const getProfile = async () => {
   return data;
 };
 
-export const updateProfile = async (payload) => {
-  const { data } = await api.put('/student/profile', payload);
+export const updateProfile = async ({ name, photoFile, year, batch, section }) => {
+  const form = new FormData();
+  if (name !== undefined) form.append('name', name);
+  if (year !== undefined) form.append('year', year);
+  if (batch !== undefined) form.append('batch', batch);
+  if (section !== undefined) form.append('section', section);
+  if (photoFile instanceof File) form.append('photo', photoFile);
+  const { data } = await api.put('/student/profile', form);
   return data;
 };
 
@@ -90,3 +96,6 @@ export const getStudentHistory = async () => {
   const { data } = await api.get('/student/history');
   return data;
 };
+
+const API_ORIGIN = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
+export const resolveFileUrl = (path) => (path ? `${API_ORIGIN}${path}` : '');

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getProfile, updateProfile } from '../../services/studentService';
+import { getProfile, updateProfile, resolveFileUrl } from '../../services/studentService';
 import { YEARS, SECTIONS } from '../../constants/adminConstants';
 
 export default function StudentProfilePage() {
@@ -12,7 +12,8 @@ export default function StudentProfilePage() {
   const [year, setYear] = useState(YEARS[0]);
   const [section, setSection] = useState(SECTIONS[0]);
   const [batch, setBatch] = useState('');
-  const [photo, setPhoto] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
   const [initLoading, setInitLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
@@ -28,7 +29,7 @@ export default function StudentProfilePage() {
         setYear(user.year || YEARS[0]);
         setSection(user.section || SECTIONS[0]);
         setBatch(user.batch || '');
-        setPhoto(user.photo || '');
+        setPhotoPreview(resolveFileUrl(user.photo));
       } catch (err) {
         setMsg({ text: err?.response?.data?.message || 'Failed to load profile', type: 'error' });
       } finally {
@@ -38,29 +39,27 @@ export default function StudentProfilePage() {
   }, []);
 
   const handlePhotoUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setMsg({ text: 'Please select a valid image file', type: 'error' });
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setMsg({ text: 'Image size must be less than 2MB', type: 'error' });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPhoto(reader.result);
-      setMsg({ text: 'Photo attached. Click Save Changes to apply.', type: 'info' });
-    };
-    reader.readAsDataURL(file);
-  };
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    setMsg({ text: 'Please select a valid image file', type: 'error' });
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    setMsg({ text: 'Image size must be less than 2MB', type: 'error' });
+    return;
+  }
+  setPhotoFile(file);
+  setPhotoPreview(URL.createObjectURL(file));
+  setMsg({ text: 'Photo attached. Click Save Changes to apply.', type: 'info' });
+};
 
   const handleRemovePhoto = () => {
-    setPhoto('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    setMsg({ text: 'Photo removed. Click Save Changes to apply.', type: 'info' });
-  };
+  setPhotoFile(null);
+  setPhotoPreview('');
+  if (fileInputRef.current) fileInputRef.current.value = '';
+  setMsg({ text: 'Photo removed. Click Save Changes to apply.', type: 'info' });
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,13 +72,15 @@ export default function StudentProfilePage() {
     try {
       const { user: updated } = await updateProfile({
         name: name.trim(),
-        photo,
+        photoFile,
         year,
         batch: batch.trim(),
         section,
       });
       setProfile(updated);
       updateUser(updated);
+      setPhotoFile(null);
+      setPhotoPreview(resolveFileUrl(updated.photo));
       setMsg({ text: 'Profile updated successfully!', type: 'success' });
     } catch (err) {
       setMsg({ text: err?.response?.data?.message || 'Failed to update profile', type: 'error' });
@@ -137,8 +138,8 @@ export default function StudentProfilePage() {
             onClick={() => fileInputRef.current?.click()}
             className="relative w-24 h-24 rounded-full border-2 border-brand overflow-hidden cursor-pointer flex items-center justify-center bg-neutral-200 dark:bg-neutral-800 shadow-md group"
           >
-            {photo ? (
-              <img src={photo} alt="Avatar" className="w-full h-full object-cover" />
+            {photoPreview ? (
+              <img src={photoPreview} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               <span className="text-3xl font-bold text-brand">{initials}</span>
             )}
@@ -156,7 +157,7 @@ export default function StudentProfilePage() {
               <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs font-semibold text-brand hover:underline">
                 Upload Photo
               </button>
-              {photo && (
+              {photoPreview && (
                 <>
                   <span className="text-neutral-400">&bull;</span>
                   <button type="button" onClick={handleRemovePhoto} className="text-xs font-semibold text-red-500 hover:underline">

@@ -27,7 +27,7 @@ const addEquipment = asyncHandler(async (req, res) => {
     throw new Error("name, section and totalUnits are required.");
   }
 
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : "";
+  const imageUrl = req.file ? `/uploads/photos/${req.file.filename}` : "";
 
   const equipment = await LabEquipment.create({
     name,
@@ -39,7 +39,6 @@ const addEquipment = asyncHandler(async (req, res) => {
     department: req.user.department,
     addedBy: req.user._id,
   });
-  res.status(201).json({ success: true, equipment });
 });
 
 const getEquipment = asyncHandler(async (req, res) => {
@@ -52,8 +51,6 @@ const getEquipment = asyncHandler(async (req, res) => {
 });
 
 const updateEquipment = asyncHandler(async (req, res) => {
-  console.log("UPDATE PAYLOAD:", req.body);
-  console.log("UPDATE FILE:", req.file);
   const equipment = await LabEquipment.findOne({ _id: req.params.id, department: req.user.department });
   if (!equipment) {
     res.status(404);
@@ -66,7 +63,7 @@ const updateEquipment = asyncHandler(async (req, res) => {
   if (totalUnits !== undefined) equipment.totalUnits = Number(totalUnits);
   if (availableUnits !== undefined) equipment.availableUnits = Number(availableUnits);
   if (req.file) {
-    equipment.imageUrl = `/uploads/${req.file.filename}`;
+    equipment.imageUrl = `/uploads/photos/${req.file.filename}`;
   }
   await equipment.save();
   res.json({ success: true, equipment });
