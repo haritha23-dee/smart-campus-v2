@@ -23,6 +23,8 @@ export const NotificationProvider = ({ children }) => {
   const socketRef = useRef(null);
   const catchUpToastRef = useRef(null);
 
+  const userId = user?._id || null;
+
   const fetchNotifications = useCallback(async ({notifyCatchUp = false} = {}) => {
     if (!user) return;
     setLoading(true);
@@ -41,15 +43,15 @@ export const NotificationProvider = ({ children }) => {
         }
       }
     } catch {
-        //silent on notification polling
+        //silent notification polling
     } 
     finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setNotifications([]);
       setUnreadCount(0);
       catchUpToastRef.current = false;
@@ -83,7 +85,7 @@ export const NotificationProvider = ({ children }) => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [user, fetchNotifications]);
+  }, [userId, fetchNotifications]);
 
   const markAsRead = async (id) => {
     setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)));

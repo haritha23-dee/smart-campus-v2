@@ -17,9 +17,9 @@ router.put("/profile/change-password", changePassword);
 // Equipment inventory
 router.get("/sections", ctrl.listSections);
 router.get("/sections/:section/equipment", ctrl.listEquipmentInSection);
-router.post("/equipment", ctrl.addEquipment);
+router.post("/equipment", uploadPhoto.single("image"), ctrl.addEquipment);
 router.get("/equipment/:id", ctrl.getEquipment);
-router.put("/equipment/:id", ctrl.updateEquipment);
+router.put("/equipment/:id", uploadPhoto.single("image"), ctrl.updateEquipment);
 router.delete("/equipment/:id", ctrl.removeEquipment);
 router.get("/booked", ctrl.listBooked);
 router.get("/overdue", ctrl.listOverdue);

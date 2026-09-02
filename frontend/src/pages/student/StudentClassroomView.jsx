@@ -91,7 +91,7 @@ export default function StudentClassroomView() {
     if (
       isResourceEvent &&
       String(meta.classroomId) === String(id) &&
-      meta.subject === activeSubject
+      (meta.subject === activeSubject || !activeSubject)
     ) {
       fetchResources(activeSubject);
     }

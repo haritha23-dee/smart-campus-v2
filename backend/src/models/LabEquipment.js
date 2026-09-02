@@ -5,6 +5,7 @@ const labEquipmentSchema = new mongoose.Schema(
     department: { type: mongoose.Schema.Types.ObjectId, ref: "Department", required: true },
     section: { type: String, required: true, trim: true }, 
     description: { type: String, trim: true, default: "" },
+    imageUrl: {type: String, default: ""},
     totalUnits: { type: Number, required: true, min: 0 },
     availableUnits: { type: Number, required: true, min: 0 },
     addedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

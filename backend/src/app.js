@@ -38,7 +38,6 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Serve static test/demo pages placed in /public (e.g. the notification tester)
 app.use(express.static(path.join(__dirname, "..", "public")));
-
 app.get("/api/health", (req, res) => res.json({ success: true, message: "Smart Campus API is running." }));
 
 app.use("/api/auth", authRoutes);

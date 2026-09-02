@@ -71,9 +71,14 @@ export const requestBookBorrow = async (id) => {
   return data;
 };
 
-export const listLabEquipment = async (params = {}) => {
-  const { data } = await api.get('/student/lab/equipment', { params });
-  return data;
+export const listLabSections = async (deptId) => {
+  const { data } = await api.get(`/student/lab/departments/${deptId}/sections`);
+  return data; 
+};
+
+export const listEquipmentInLabSection = async (deptId, section) => {
+  const { data } = await api.get(`/student/lab/departments/${deptId}/sections/${encodeURIComponent(section)}/equipment`);
+  return data; 
 };
 
 export const requestEquipmentBooking = async (id) => {

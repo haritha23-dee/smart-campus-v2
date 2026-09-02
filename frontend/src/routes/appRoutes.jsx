@@ -4,7 +4,7 @@ import AboutPage from '../pages/AboutPage';
 import LoginPage from '../pages/LoginPage';
 import PrivacyPage from '../pages/legal/PrivacyPage';
 import TermsPage from '../pages/legal/TermsPage';
-import ProtectedRoute from './protectedRoute';
+import ProtectedRoute from './ProtectedRoute';
 import AdminLayout from '../layouts/AdminLayout';
 import AdminHome from '../pages/admin/AdminHome';
 import AdminUserManagement from '../pages/admin/AdminUserManagement';
@@ -44,7 +44,6 @@ import LabStaffRequests from '../pages/labStaff/LabStaffRequests';
 import LabStaffReturns from '../pages/labStaff/LabStaffReturns';
 import LabStaffProfile from '../pages/labStaff/LabStaffProfile';
 import LabStaffHistory from '../pages/labStaff/LabStaffHistory';
-import { Rotate3D } from 'lucide-react';
 
 export default function AppRoutes() {
   return (
@@ -115,10 +114,10 @@ export default function AppRoutes() {
         </Route>
 
         <Route
-          path="lab-staff"
+          path="/lab-staff"
           element={
             <ProtectedRoute allowedRoles={['lab_staff']}>
-              <LibraryStaffLayout />
+              <LabStaffLayout />
             </ProtectedRoute>
           }
         >

@@ -1,1 +1,1 @@
-export const INSTRUMENT_SECTIONS = ['Biology', 'Chemistry', 'Physics', 'Non-technical', 'Technology'];
+export const LAB_SECTIONS = ['Electronics', 'Mechanical', 'Computing', 'Physics', 'Chemistry', 'General Tools'];

@@ -21,7 +21,7 @@ export default function StudentHome() {
         ];
         setReminders(pending);
       } catch {
-        // silent — home should not hard-fail
+        // silent-home 
       } finally {
         setLoading(false);
       }
