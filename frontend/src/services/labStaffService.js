@@ -14,11 +14,6 @@ export const updateLabProfile = async ({ name, yearJoined, photoFile }) => {
   return data; 
 };
 
-export const changePassword = async ({ currentPassword, newPassword }) => {
-  const { data } = await api.put('/auth/change-password', { currentPassword, newPassword });
-  return data; 
-};
-
 export const getLabHistory = async () => {
   const [issuedRes, returnedRes, overdueRes, pendingRes] = await Promise.all([
     api.get('/lab-staff/booked'),

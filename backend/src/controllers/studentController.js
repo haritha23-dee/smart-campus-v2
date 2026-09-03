@@ -225,7 +225,8 @@ const requestEquipment = asyncHandler(async (req, res) => {
 const getHistory = asyncHandler(async (req, res) => {
   const [bookHistory, equipmentHistory, postedResources] = await Promise.all([
     BookRequest.find({ student: req.user._id }).populate("book", "title author").sort({ createdAt: -1 }),
-    EquipmentRequest.find({ student: req.user._id }).populate("equipment", "name").sort({ createdAt: -1 }),
+    EquipmentRequest.find({ student: req.user._id }).populate({ path: "equipment", select: "name department", 
+      populate: { path: "department", select: "name" } }).sort({ createdAt: -1 }),
     Resource.find({ postedBy: req.user._id }).populate("classroom", "code").sort({ createdAt: -1 }),
   ]);
   res.json({ success: true, bookHistory, equipmentHistory, postedResources });

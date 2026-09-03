@@ -15,7 +15,7 @@ function isOverdue(item) {
   return (
     item.status === 'Approved' &&
     item.dueDate &&
-    !item.returnDate &&
+    !item.returnAt &&
     new Date(item.dueDate) < new Date()
   );
 }
@@ -32,9 +32,9 @@ export default function StudentHistoryPage() {
       try {
         const res = await getStudentHistory();
         setData({
-          libraryHistory: res.libraryHistory || [],
-          labHistory: res.labHistory || [],
-          postedNotes: res.postedNotes || [],
+          libraryHistory: res.bookHistory || [],
+          labHistory: res.equipmentHistory || [],
+          postedNotes: res.postedResources || [],
         });
       } catch (err) {
         setError(err?.response?.data?.message || 'Failed to load history.');
@@ -146,8 +146,8 @@ export default function StudentHistoryPage() {
                     {data.labHistory.map((h) => (
                       <tr key={h._id} className={`border-b border-border-subtle last:border-0 ${isOverdue(h) ? 'bg-red-500/5' : ''}`}>
                         <td className="px-4 py-3 font-medium">{h.equipment?.name}</td>
-                        <td className="px-4 py-3 text-xs">{h.equipment?.department}</td>
-                        <td className="px-4 py-3 text-xs">{h.issueDate ? new Date(h.issueDate).toLocaleDateString() : '—'}</td>
+                        <td className="px-4 py-3 text-xs">{h.equipment?.department?.name || '-'}</td>
+                        <td className="px-4 py-3 text-xs">{h.requestDate ? new Date(h.requestDate).toLocaleDateString() : '—'}</td>
                         <td className="px-4 py-3 text-xs">{h.dueDate ? new Date(h.dueDate).toLocaleDateString() : '—'}</td>
                         <td className="px-4 py-3"><StatusBadge item={h} /></td>
                       </tr>
